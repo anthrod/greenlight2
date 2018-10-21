@@ -1,5 +1,11 @@
 
 import os
+import urllib2
+import pytz
+import pandas as pd
+from bs4 import BeautifulSoup
+from datetime import datetime
+from pandas.io.data import DataReader
 
 wikipedia_snp500_html_url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
 snp500_symbols_filename = "snp500_symbols.txt"
@@ -11,9 +17,16 @@ def fetch_from_wikipedia():
   on the S&P500 by reading wikipedia's S&P500 html page.
   """
   symbols = []
-  #Get wikipedia page: curl -G <wikipedia_url> -o <temporary_filename>
-  #Parse page to extract symbols list
-  #Delete temporary_file
+  hdr   = {'User-Agent': 'Mozilla/5.0'}
+  req   = urllib2.Request(wikipedia_snp500_html_url, headers=hdr)
+  page  = urllib2.urlopen(req)
+  soup  = BeautifulSoup(page)
+  table = soup.find('table', {'class': 'wikitable sortable'})
+  for row in table.findAll('tr'):
+    col = row.findAll('td')
+    if len(col) > 0:
+      symbols.append(str(col[0].string.strip()))
+  print('Gathered ' + str(len(symbols)) + ' symbols')
   return symbols
 
 def fetch_snp500_symbols():
@@ -27,8 +40,11 @@ def write_symbols_to_file(filepath=snp500_symbols_filename):
   if len(symbols)==0:
     print("Error: Did not fetch any symbols")
     quit()
-  #Write symbols to file here
-  print("Wrote " + len(symbols) + " to " + filepath)
+  symbolfile = open(filepath, 'w')
+  for symbol in symbols:
+    symbolfile.write(symbol + '\n')
+  symbolfile.close()
+  print("Wrote " + str(len(symbols)) + " to " + filepath)
 
 def verify_cache():
   if not cache_varname in os.environ or not os.path.isdir(os.environ[cache_varname]):
