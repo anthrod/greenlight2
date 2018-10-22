@@ -52,10 +52,15 @@ def verify_cache():
           + cache_varname + " directory. Please define this variable and try again")
     quit()
 
+def update_snp500_symbols(cache_path):
+  cache_file = os.path.join(cache_path, snp500_symbols_filename)
+  write_symbols_to_file( cache_file )
+
 if __name__ == '__main__':
   """If running this script standalone, fetch S&P500 symbols and write the symbol file to
   a file in the user's cache_varname directory"""
   verify_cache()
   cache_dir = os.environ[cache_varname] 
-  cache_file = os.path.join(cache_dir,snp500_symbols_filename)
-  write_symbols_to_file( cache_file )
+  update_snp500_symbols(cache_dir, snp500_symbols_filename)
+
+
