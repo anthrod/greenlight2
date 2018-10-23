@@ -1,32 +1,40 @@
+import os
+import time
 
-
-alphavantage_api_key = VB7RUOUTCDQMC6HE
+alphavantage_api_key = "VB7RUOUTCDQMC6HE"
 alphavantage_base_url = "https://www.alphavantage.co/query?"
 cache_varname = "GREENLIGHT_CACHE_PATH"
 americanstocks_cachedir_name = "americanstocks"
+snp500_symbols_filename = "snp500_symbols.txt"
 
 class TimeseriesQuery(object):
   def __init__(
     self,
     symbol,
+    output_directory,
     function="TIME_SERIES_DAILY",
     output_size="full",
-    file_type="csv",
     api_key=alphavantage_api_key
   ):
-    self.querystring  = alphavantage_base_url + "function=" + function
+    self.querystring  = "curl -G " + alphavantage_base_url + "function=" + function
     self.querystring += "\&symbol=" + symbol
     self.querystring += "\&outputsize=" + output_size
     self.querystring += "\&apikey=" + api_key
+    self.querystring += " -o " + os.path.join(output_directory,symbol) + ".json"
 
-  def run(self, output_directory):
-   """Run querystring html query, and save response to a file 
-   named <symbol>.csv in directory output_filepath""" 
-   pass
+  def run(self):
+    #Limit is 5 per minute
+    print("\nPatience...")
+    time.sleep(13)
+    print("Command: " + self.querystring)
+    os.system(self.querystring) 
 
 def get_symbols_list(cached_symbols_filepath):
   symbols = []
   #Read symbols from file
+  with open(cached_symbols_filepath, 'r') as cached_symbols_file:
+    for line in cached_symbols_file:
+      symbols.append(line.strip("\n"))
   return symbols
 
 def fetch_timeseries(cached_symbols_filepath, timeseries_directorypath):
@@ -36,8 +44,8 @@ def fetch_timeseries(cached_symbols_filepath, timeseries_directorypath):
     #Check if timeseries is updated to current day
     #If timeseries is already up-to-date, continue
     #If not up to date or file doesnt exist, get the data
-      query = TimeseriesQuery(symbol)
-      query.run(timeseries_directorypath)
+      query = TimeseriesQuery(symbol, timeseries_directorypath)
+      query.run()
 
 def verify_cache():
   if not cache_varname in os.environ or not os.path.isdir(os.environ[cache_varname]):
