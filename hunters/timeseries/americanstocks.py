@@ -19,8 +19,9 @@ class TimeseriesQuery(object):
     self.querystring  = "curl -G " + alphavantage_base_url + "function=" + function
     self.querystring += "\&symbol=" + symbol
     self.querystring += "\&outputsize=" + output_size
+    self.querystring += "\&datatype=csv"
     self.querystring += "\&apikey=" + api_key
-    self.querystring += " -o " + os.path.join(output_directory,symbol) + ".json"
+    self.querystring += " -o " + os.path.join(output_directory,symbol) + ".csv"
 
   def run(self):
     #Limit is 5 per minute
@@ -37,15 +38,17 @@ def get_symbols_list(cached_symbols_filepath):
       symbols.append(line.strip("\n"))
   return symbols
 
-def fetch_timeseries(cached_symbols_filepath, timeseries_directorypath):
+def fetch_timeseries():
+  verify_cache()
+  cache_dir = os.environ[cache_varname] 
+  cached_symbols_filepath = os.path.join(cache_dir,snp500_symbols_filename)
+  verify_symbols_file(cached_symbols_filepath)
+  timeseries_directorypath = os.path.join(cache_dir,americanstocks_cachedir_name)
+  if not os.path.exists(timeseries_directorypath): os.mkdir(timeseries_directorypath)
   symbols = get_symbols_list(cached_symbols_filepath)
   for symbol in symbols:
-    #If timeseries file exists for this symbol, open it
-    #Check if timeseries is updated to current day
-    #If timeseries is already up-to-date, continue
-    #If not up to date or file doesnt exist, get the data
-      query = TimeseriesQuery(symbol, timeseries_directorypath)
-      query.run()
+    query = TimeseriesQuery(symbol, timeseries_directorypath)
+    query.run()
 
 def verify_cache():
   if not cache_varname in os.environ or not os.path.isdir(os.environ[cache_varname]):
@@ -62,11 +65,4 @@ def verify_symbols_file(symbols_filepath):
 if __name__ == '__main__':
   """If running this script standalone, fetch S&P500 symbols and write the symbol file to
   a file in the user's cache_varname directory"""
-  verify_cache()
-  cache_dir = os.environ[cache_varname] 
-  cached_symbols_filepath = os.path.join(cache_dir,snp500_symbols_filename)
-  verify_symbols_file(cached_symbols_filepath)
-  timeseries_directorypath = os.path.join(cache_dir,americanstocks_cachedir_name)
-  if not os.path.exists(timeseries_directorypath): os.mkdir(timeseries_directorypath)
-  fetch_timeseries(cached_symbols_filepath, timeseries_directorypath)
-   
+  fetch_timeseries()  
