@@ -4,18 +4,19 @@ import urllib
 from urllib import urlretrieve
 from urllib2 import urlopen
 import urlparse
+import time
 
 wikipedia_snp500_html_url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
 cache_varname = "GREENLIGHT_CACHE_PATH"
 snp500_symbols_filename = "snp500_symbols.txt"
-commonstocks_ratios_cachedir_name   = os.path.join("americanstocks","ratios")
-commonstocks_income_cachedir_name   = os.path.join("americanstocks","income")
-commonstocks_cashflow_cachedir_name = os.path.join("americanstocks","cashflow")
-commonstocks_balance_cachedir_name  = os.path.join("americanstocks","balance")
+commonstocks_ratios_cachedir_name   = os.path.join("stocks","ratios")
+commonstocks_income_cachedir_name   = os.path.join("stocks","income")
+commonstocks_cashflow_cachedir_name = os.path.join("stocks","cashflow")
+commonstocks_balance_cachedir_name  = os.path.join("stocks","balance")
 
 msKRstub  = "http://financials.morningstar.com/ajax/exportKR2CSV.html?t="
 msFinSeg1 = "http://financials.morningstar.com/ajax/ReportProcess4CSV.html?t="
-msFinSeg2 = "&reportType"
+msFinSeg2 = "&reportType="
 msFinSeg3 = "&period=12&dataType=A&order=asc&columnYear=5&number=3"
 
 def pull_financials(cache_path):
@@ -35,16 +36,17 @@ def pull_financials(cache_path):
       print("Pulling financial data for " + symbol)
       msURL = msKRstub + symbol
       try:
-        puller.retrieve(msURL, os.path.join(ratios_dir, symbol + ".csv"))
+        #os.system("curl -G " + msURL + " -q -o " + os.path.join(ratios_dir, symbol + ".txt"))
+        puller.retrieve(msURL, os.path.join(ratios_dir, symbol + ".txt"))
         #Income Statement
         msURL = msFinSeg1 + symbol + msFinSeg2 + 'is' + msFinSeg3
-        puller.retrieve(msURL, os.path.join(income_dir, symbol + ".csv"))
+        puller.retrieve(msURL, os.path.join(income_dir, symbol + ".txt"))
         #Cash Flow
         msURL = msFinSeg1 + symbol + msFinSeg2 + 'cf' + msFinSeg3
-        puller.retrieve(msURL, os.path.join(cashflow_dir, symbol + ".csv"))
+        puller.retrieve(msURL, os.path.join(cashflow_dir, symbol + ".txt"))
         #Balance sheed
         msURL = msFinSeg1 + symbol + msFinSeg2 + 'bs' + msFinSeg3
-        puller.retrieve(msURL, os.path.join(balance_dir, symbol + ".csv"))
+        puller.retrieve(msURL, os.path.join(balance_dir, symbol + ".txt"))
       except IOError: print("ERROR: " + symbol)
 
 def verify_cache():

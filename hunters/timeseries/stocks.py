@@ -4,7 +4,7 @@ import time
 alphavantage_api_key = "VB7RUOUTCDQMC6HE"
 alphavantage_base_url = "https://www.alphavantage.co/query?"
 cache_varname = "GREENLIGHT_CACHE_PATH"
-americanstocks_cachedir_name = "americanstocks"
+stocks_cachedir_name = "stocks/prices"
 snp500_symbols_filename = "snp500_symbols.txt"
 
 class TimeseriesQuery(object):
@@ -43,7 +43,7 @@ def fetch_timeseries():
   cache_dir = os.environ[cache_varname] 
   cached_symbols_filepath = os.path.join(cache_dir,snp500_symbols_filename)
   verify_symbols_file(cached_symbols_filepath)
-  timeseries_directorypath = os.path.join(cache_dir,americanstocks_cachedir_name)
+  timeseries_directorypath = os.path.join(cache_dir, stocks_cachedir_name)
   if not os.path.exists(timeseries_directorypath): os.mkdir(timeseries_directorypath)
   symbols = get_symbols_list(cached_symbols_filepath)
   for symbol in symbols:

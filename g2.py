@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 
 from hunters.symbols import snp500
-from hunters.timeseries import americanstocks
+from hunters.timeseries import stocks
 
 snp500_symbols_filename = "snp500_symbols.txt"
 cache_varname = "GREENLIGHT_CACHE_PATH"
@@ -40,7 +40,9 @@ def doUpdates():
   print("Updating S&P500 symbols...")
   snp500.update_snp500_symbols( os.environ[cache_varname] )  
   print("Pulling S&P500 time series data...")
-  americanstocks.fetch_timeseries() 
+  if not os.path.exists(os.path.join(os.environ[cache_varname], "stocks")):
+    os.mkdir (os.path.join(os.environ[cache_varname], "stocks"))
+  stocks.fetch_timeseries() 
   timestamp_file = open(timestamp_file_path, 'w')
   timestamp_file.write("Year: " + str(datetime.today().year) + "\n")
   timestamp_file.write("Month: " + str(datetime.today().month) + "\n")
