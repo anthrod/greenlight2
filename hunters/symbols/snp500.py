@@ -20,7 +20,7 @@ def fetch_from_wikipedia():
   hdr   = {'User-Agent': 'Mozilla/5.0'}
   req   = urllib2.Request(wikipedia_snp500_html_url, headers=hdr)
   page  = urllib2.urlopen(req)
-  soup  = BeautifulSoup(page)
+  soup  = BeautifulSoup(page, 'html.parser')
   table = soup.find('table', {'class': 'wikitable sortable'})
   for row in table.findAll('tr'):
     col = row.findAll('td')
@@ -61,6 +61,6 @@ if __name__ == '__main__':
   a file in the user's cache_varname directory"""
   verify_cache()
   cache_dir = os.environ[cache_varname] 
-  update_snp500_symbols(cache_dir, snp500_symbols_filename)
+  update_snp500_symbols(cache_dir)
 
 
