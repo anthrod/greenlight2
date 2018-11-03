@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 import argparse
 import matplotlib.pyplot as plt
+import numpy as np
 
 from hunters.symbols import snp500
 from hunters.timeseries import stocks
@@ -40,6 +41,7 @@ if __name__ == '__main__':
   parser.add_argument("--plotDE", dest="plotDE", default=None)
   parser.add_argument("--plotEPS", dest="plotEPS", default=None)
   parser.add_argument("--plotROC", dest="plotROC", default=None)
+  parser.add_argument("--histROC", dest="histROC", default=False, action="store_true")
   args = parser.parse_args()
   checkCachePath()
   if (args.doUpdate):
@@ -55,12 +57,25 @@ if __name__ == '__main__':
     plt.ylabel("Earnings Per Share")
     plt.show()
   if (args.plotROC is not None):
-    data = roc.get_ROC(args.plotROC, os.environ[cache_varname]) 
-    plt.plot(data)
+    if (args.plotROC=="all"):
+      datadict = roc.get_all_ROC(os.environ[cache_varname])
+      for data in datadict.items():
+        plt.plot(data[1])
+    else:
+      data = roc.get_ROC(args.plotROC, os.environ[cache_varname]) 
+      plt.plot(data)
     plt.ylabel("Return on Capital (%)")
     plt.show()
-
-
+  if (args.histROC==True):
+    data = roc.get_all_current_ROC(os.environ[cache_varname])
+    hist_data = []
+    for item in data.items():
+      hist_data.append(item[1])
+    hist_data = [float(x) for x in hist_data]
+    bins = np.arange(min(hist_data), max(hist_data), 2)
+    plt.xlim([-10, 60])
+    plt.hist(hist_data, bins=bins, alpha=0.8)
+    plt.show() 
 
 
 
