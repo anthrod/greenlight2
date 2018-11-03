@@ -19,6 +19,16 @@ msFinSeg1 = "http://financials.morningstar.com/ajax/ReportProcess4CSV.html?t="
 msFinSeg2 = "&reportType="
 msFinSeg3 = "&period=12&dataType=A&order=asc&columnYear=5&number=3"
 
+def getfile(url, filepath):
+  puller = urllib.URLopener()
+  delay  = 2
+  for i in range(0,5):
+    puller.retrieve(url, filepath)
+    if os.stat(filepath).st_size>0:
+      return
+    time.sleep(delay)
+    delay = delay*2
+
 def pull_financials(cache_path):
   cached_symbols_filepath = os.path.join(cache_path, snp500_symbols_filename)
   ratios_dir   = os.path.join(cache_path, commonstocks_ratios_cachedir_name)
@@ -34,19 +44,23 @@ def pull_financials(cache_path):
     for line in cached_symbols_file:
       symbol = line.strip("\n")
       print("Pulling financial data for " + symbol)
-      msURL = msKRstub + symbol
       try:
-        #os.system("curl -G " + msURL + " -q -o " + os.path.join(ratios_dir, symbol + ".txt"))
-        puller.retrieve(msURL, os.path.join(ratios_dir, symbol + ".txt"))
+        #Ratios
+        msURL = msKRstub + symbol
+        filepath = os.path.join(ratios_dir, symbol+".txt")
+        getfile(msURL,filepath)
         #Income Statement
         msURL = msFinSeg1 + symbol + msFinSeg2 + 'is' + msFinSeg3
-        puller.retrieve(msURL, os.path.join(income_dir, symbol + ".txt"))
+        filepath = os.path.join(income_dir, symbol + ".txt")
+        getfile(msURL,filepath)
         #Cash Flow
         msURL = msFinSeg1 + symbol + msFinSeg2 + 'cf' + msFinSeg3
-        puller.retrieve(msURL, os.path.join(cashflow_dir, symbol + ".txt"))
-        #Balance sheed
+        filepath = os.path.join(cashflow_dir, symbol + ".txt")
+        getfile(msURL,filepath)
+        #Balance sheet
         msURL = msFinSeg1 + symbol + msFinSeg2 + 'bs' + msFinSeg3
-        puller.retrieve(msURL, os.path.join(balance_dir, symbol + ".txt"))
+        filepath = os.path.join(balance_dir, symbol + ".txt")
+        getfile(msURL,filepath)
       except IOError: print("ERROR: " + symbol)
 
 def verify_cache():
