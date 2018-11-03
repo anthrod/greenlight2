@@ -7,27 +7,29 @@ wikipedia_snp500_html_url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_com
 cache_varname = "GREENLIGHT_CACHE_PATH"
 commonstocks_ratios_cachedir_name   = os.path.join("stocks","ratios")
 
-def plot_roc(symbol, cache_dir):
+def plot_de(symbol, cache_dir):
   ratios_dir = os.path.join(cache_dir, commonstocks_ratios_cachedir_name)
   file_path = os.path.join(ratios_dir, symbol + ".txt")
   if not os.path.exists(file_path):
     print("Could not open file: " + file_path)
     quit()
-  num_years = 0
-  ROC = []
+  DE = []
   with open(file_path, "r") as financials_file:
     for line in financials_file:
-      if "Liquidity/Financial Health" in line:
-        num_years = len(line.split(","))-1
       if "Debt/Equity" in line:
-        ROC = line.strip("Debt/Equity,").strip("\n").split(",")
-  if num_years==0 or not num_years==len(ROC):
+        DE = line.strip("Debt/Equity,").strip("\n").split(",")
+  if len(DE)==0:
     print("An error occured in reading Debt/Equity")
     quit()
-  plt.plot(ROC)
+  if '' in DE:
+    print("Found blank entry in data. Replacing with mean")
+    DE_nums = [float(x) for x in DE if x!='']
+    nums_mean = sum(DE_nums) / len(DE_nums)
+    for i in range(0,len(DE)):
+      if DE[i]=='': DE[i] = nums_mean
+  plt.plot(DE)
   plt.ylabel("Debt to Equity Ratio")
   plt.show()
-  
 
 def verify_cache():
   if not cache_varname in os.environ or not os.path.isdir(os.environ[cache_varname]):
@@ -40,4 +42,4 @@ if __name__ == '__main__':
   a file in the user's cache_varname directory"""
   verify_cache()
   cache_dir = os.environ[cache_varname] 
-  plot_roc(sys.argv[1], cache_dir)
+  plot_de(sys.argv[1], cache_dir)
