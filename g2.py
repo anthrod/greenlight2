@@ -40,24 +40,41 @@ if __name__ == '__main__':
   parser = argparse.ArgumentParser(description="See numbers. Burn money.")
   parser.add_argument("--update", "-u", dest="doUpdate", default=False, action="store_true")
   parser.add_argument("--plotDE", dest="plotDE", default=None)
+  parser.add_argument("--histDE", dest="histDE", default=False, action="store_true")
   parser.add_argument("--plotEPS", dest="plotEPS", default=None)
   parser.add_argument("--plotROC", dest="plotROC", default=None)
   parser.add_argument("--histROC", dest="histROC", default=False, action="store_true")
   args = parser.parse_args()
   checkCachePath()
-  if (args.doUpdate):
+  if args.doUpdate:
     doUpdates()
-  if (args.plotDE is not None):
-    if (args.plotDE=="all"):
-      datadict = de.get_all_DE(os.environ[cache_varname])
-      for data in datadict.items():
-        plt.plot(data[1])
-    else:
-      data = de.get_DE(args.plotDE, os.environ[cache_varname]) 
-      plt.plot(data)
+  if args.plotDE is not None:
+    gatherer = de.DEGatherer(args.plotDE, os.environ[cache_varname])
+    for data in gatherer.datadict.items():
+      plt.plot(data[1])
     plt.ylabel("Debt to Equity Ratio")
     plt.show()
-  if (args.plotEPS is not None):
+  if args.histDE is True: 
+    gatherer = de.DEGatherer("all", os.environ[cache_varname])
+    data = gatherer.mostrecent()
+    hist_data = []
+    for item in data.items():
+      hist_data.append(float(item[1]))
+    data = sorted(data.items(), reverse=True, key=lambda kv:kv[1])
+    for item in data: print(item)
+    bins = np.arange(min(hist_data), max(hist_data), 0.2)
+    ax1 = plt.subplot(211)
+    plt.title('Ratio of debt to equity')
+    plt.xlim([min(hist_data), max(hist_data)])
+    ax1.hist(hist_data, bins=bins, normed=True, alpha=0.8)
+    shape, loc, scale = lognorm.fit(hist_data)
+    pdf = lognorm.pdf(bins,shape,loc,scale)
+    ax1.plot(bins,pdf,'r')
+    ax2 = plt.subplot(212)
+    cdf = lognorm.cdf(bins,shape,loc,scale)
+    ax2.plot(bins,cdf,'r')
+    plt.show() 
+  if args.plotEPS is not None:
     data = eps.get_EPS(args.plotEPS, os.environ[cache_varname]) 
     plt.plot(data)
     plt.ylabel("Earnings Per Share")

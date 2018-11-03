@@ -11,8 +11,7 @@ class ROCGatherer(IndicatorGatherer):
     return os.path.join(self.cachedir, commonstocks_ratios_cachedir_name)
 
   def fetchentry(self, symbol):
-    ratios_dir = self.datadir()
-    file_path = os.path.join(ratios_dir, symbol + ".txt")
+    file_path = os.path.join(self.datadir(), symbol + ".txt")
     if not os.path.exists(file_path):
       print("Could not open file: " + file_path)
       quit()
