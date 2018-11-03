@@ -63,18 +63,14 @@ if __name__ == '__main__':
     plt.ylabel("Earnings Per Share")
     plt.show()
   if (args.plotROC is not None):
-    if (args.plotROC=="all"):
-      datadict = roc.get_all_ROC(os.environ[cache_varname])
-      for data in datadict.items():
-        plt.plot(data[1])
-    else:
-      data = roc.get_ROC(args.plotROC, os.environ[cache_varname]) 
-      print(data)
-      plt.plot(data)
+    gatherer = roc.ROCGatherer(args.plotROC, os.environ[cache_varname])
+    for data in gatherer.datadict.items():
+      plt.plot(data[1])
     plt.ylabel("Return on Capital (%)")
     plt.show()
   if (args.histROC==True):
-    data = roc.get_all_current_ROC(os.environ[cache_varname])
+    gatherer = roc.ROCGatherer("all", os.environ[cache_varname])
+    data = gatherer.mostrecent()
     hist_data = []
     for item in data.items():
       if (float(item[1]) > 0):
