@@ -4,6 +4,7 @@ from datetime import datetime
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.stats import lognorm
 
 from hunters.symbols import snp500
 from hunters.timeseries import stocks
@@ -47,8 +48,13 @@ if __name__ == '__main__':
   if (args.doUpdate):
     doUpdates()
   if (args.plotDE is not None):
-    data = de.get_DE(args.plotDE, os.environ[cache_varname]) 
-    plt.plot(data)
+    if (args.plotDE=="all"):
+      datadict = de.get_all_DE(os.environ[cache_varname])
+      for data in datadict.items():
+        plt.plot(data[1])
+    else:
+      data = de.get_DE(args.plotDE, os.environ[cache_varname]) 
+      plt.plot(data)
     plt.ylabel("Debt to Equity Ratio")
     plt.show()
   if (args.plotEPS is not None):
@@ -63,6 +69,7 @@ if __name__ == '__main__':
         plt.plot(data[1])
     else:
       data = roc.get_ROC(args.plotROC, os.environ[cache_varname]) 
+      print(data)
       plt.plot(data)
     plt.ylabel("Return on Capital (%)")
     plt.show()
@@ -70,11 +77,21 @@ if __name__ == '__main__':
     data = roc.get_all_current_ROC(os.environ[cache_varname])
     hist_data = []
     for item in data.items():
-      hist_data.append(item[1])
-    hist_data = [float(x) for x in hist_data]
+      if (float(item[1]) > 0):
+        hist_data.append(float(item[1]))
+    data = sorted(data.items(), key=lambda kv:kv[1])
+    for item in data: print(item)
     bins = np.arange(min(hist_data), max(hist_data), 2)
-    plt.xlim([-10, 60])
-    plt.hist(hist_data, bins=bins, alpha=0.8)
+    ax1 = plt.subplot(211)
+    plt.title('Return on Investment Capital (Positive returns only)')
+    plt.xlim([0, max(hist_data)])
+    ax1.hist(hist_data, bins=bins, normed=True, alpha=0.8)
+    shape, loc, scale = lognorm.fit(hist_data)
+    pdf = lognorm.pdf(bins,shape,loc,scale)
+    ax1.plot(bins,pdf,'r')
+    ax2 = plt.subplot(212)
+    cdf = lognorm.cdf(bins,shape,loc,scale)
+    ax2.plot(bins,cdf,'r')
     plt.show() 
 
 

@@ -17,6 +17,14 @@ def get_ROC(symbol, cache_dir):
         num_years = len(line.split(","))-1
       if "Return on Invested Capital" in line:
         ROC = line.strip("Return on Invested Capital %,").strip("\n").split(",")
+  if '' in ROC:
+    print("Found blank entry in data. Replacing with mean")
+    ROC_nums = [float(x) for x in ROC if x!='']
+    if sum(ROC_nums) == 0:
+      return []
+    nums_mean = sum(ROC_nums) / len(ROC_nums)
+    for i in range(0,len(ROC)):
+      if ROC[i]=='': ROC[i] = nums_mean
   return ROC
 
 def get_current_ROC(symbol, cache_dir):
@@ -51,6 +59,6 @@ def get_all_current_ROC(cache_dir):
   for ratiosfile in all_files:
     symbol = ratiosfile.strip(".txt")
     data = get_current_ROC(symbol,cache_dir) 
-    if len(data)>0:
-      roc_dict[symbol] = data
+    if data or len(data)>0:
+      roc_dict[symbol] = float(data)
   return roc_dict
