@@ -5,6 +5,7 @@ import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import lognorm
+from scipy.stats import norm
 
 from hunters.symbols import snp500
 from hunters.timeseries import stocks
@@ -42,6 +43,7 @@ if __name__ == '__main__':
   parser.add_argument("--plotDE", dest="plotDE", default=None)
   parser.add_argument("--histDE", dest="histDE", default=False, action="store_true")
   parser.add_argument("--plotEPS", dest="plotEPS", default=None)
+  parser.add_argument("--histEPS", dest="histEPS", default=False, action="store_true")
   parser.add_argument("--plotROC", dest="plotROC", default=None)
   parser.add_argument("--histROC", dest="histROC", default=False, action="store_true")
   args = parser.parse_args()
@@ -75,10 +77,31 @@ if __name__ == '__main__':
     ax2.plot(bins,cdf,'r')
     plt.show() 
   if args.plotEPS is not None:
-    data = eps.get_EPS(args.plotEPS, os.environ[cache_varname]) 
-    plt.plot(data)
+    gatherer = eps.EPSGatherer(args.plotEPS, os.environ[cache_varname])
+    for data in gatherer.datadict.items():
+      plt.plot(data[1])
     plt.ylabel("Earnings Per Share")
     plt.show()
+  if args.histEPS is True: 
+    gatherer = eps.EPSGatherer("all", os.environ[cache_varname])
+    data = gatherer.mostrecent()
+    hist_data = []
+    for item in data.items():
+      hist_data.append(float(item[1]))
+    data = sorted(data.items(), key=lambda kv:kv[1])
+    for item in data: print(item)
+    bins = np.arange(-400, 400, 10.0)
+    ax1 = plt.subplot(211)
+    plt.title('Earnings Per Share')
+    plt.xlim([min(hist_data), max(hist_data)])
+    ax1.hist(hist_data, bins=bins, normed=True, alpha=0.8)
+    mu,std = norm.fit(hist_data)
+    pdf = norm.pdf(bins,mu,std)
+    ax1.plot(bins,pdf,'r')
+    ax2 = plt.subplot(212)
+    cdf = norm.cdf(bins,mu,std)
+    ax2.plot(bins,cdf,'r')
+    plt.show() 
   if (args.plotROC is not None):
     gatherer = roc.ROCGatherer(args.plotROC, os.environ[cache_varname])
     for data in gatherer.datadict.items():
