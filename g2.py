@@ -8,6 +8,7 @@ from scipy.stats import lognorm
 from scipy.stats import norm
 
 from hunters.symbols import snp500
+from hunters.symbols import exchanges
 from hunters.timeseries import stocks
 from hunters.financials import morningstar
 from gatherers import de
@@ -28,6 +29,8 @@ def checkCachePath():
   print("Using Cache Path: \"" + os.environ[cache_varname] + "\"")
 
 def doUpdates():
+  print("Pulling symbol data for US exchanges...")
+  exchanges.getsymbols( os.environ[cache_varname] )
   print("Updating S&P500 symbols...")
   snp500.update_snp500_symbols( os.environ[cache_varname] )  
   print("Pulling S&P500 time series data...")
@@ -64,7 +67,7 @@ if __name__ == '__main__':
       hist_data.append(float(item[1]))
     data = sorted(data.items(), reverse=True, key=lambda kv:kv[1])
     for item in data: print(item)
-    bins = np.arange(min(hist_data), max(hist_data), 0.2)
+    bins = np.arange(min(hist_data), max(hist_data), 0.1)
     ax1 = plt.subplot(211)
     plt.title('Ratio of debt to equity')
     plt.xlim([min(hist_data), max(hist_data)])
