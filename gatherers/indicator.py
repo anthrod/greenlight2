@@ -34,14 +34,16 @@ class IndicatorGatherer(object):
       currentsymbol = item[0]
       symboldata    = item[1]
       if '' in symboldata:
-        print("Found blank entry in data. Replacing with mean")
+        print("Found blank entry in data: " + str(symboldata) + ", Replacing with mean")
         nums = [float(x) for x in symboldata if x!='']
         if sum(nums) == 0:
-          print("Error: No valid quantities found in data for symbol " + symboldata)
-          quit()
+          print("Error: No valid quantities found in data for symbol " + self.symbol)
+          del self.datadict[item[0]]
+          continue
         nums_mean = sum(nums) / len(nums)
         for i in range(0,len(symboldata)):
           if symboldata[i]=='': symboldata[i] = nums_mean
+        self.datadict[item[0]] = symboldata
       else:
         self.datadict[item[0]] = [float(x) for x in item[1]]
 
