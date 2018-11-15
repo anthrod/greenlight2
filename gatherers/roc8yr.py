@@ -21,4 +21,4 @@ class ROC8YrGatherer(ROCGatherer):
       for i in range(0,8):
         ROC8[0] *= (1.0 + float(ROCs[i])/100.0)
       if ROC8[0]<=0.0: self.datadict[item[0]] = [0.0]
-      else: self.datadict[item[0]] = [pow(ROC8[0], 1.0/8.0) - 1]
+      else: self.datadict[item[0]] = [ 100*(pow(ROC8[0], 1.0/8.0) - 1) ]
