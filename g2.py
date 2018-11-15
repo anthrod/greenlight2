@@ -14,6 +14,7 @@ from hunters.financials import morningstar
 from gatherers import de
 from gatherers import eps
 from gatherers import roc
+from gatherers import roc8yr
 from gatherers import gpa
 
 snp500_symbols_filename = "snp500_symbols.txt"
@@ -50,6 +51,7 @@ if __name__ == '__main__':
   parser.add_argument("--histEPS", dest="histEPS", default=False, action="store_true")
   parser.add_argument("--plotROC", dest="plotROC", default=None)
   parser.add_argument("--histROC", dest="histROC", default=False, action="store_true")
+  parser.add_argument("--histROC8", dest="histROC8", default=False, action="store_true")
   parser.add_argument("--plotGPA", dest="plotGPA", default=None)
   parser.add_argument("--histGPA", dest="histGPA", default=False, action="store_true")
   args = parser.parse_args()
@@ -134,7 +136,28 @@ if __name__ == '__main__':
     ax2 = plt.subplot(212)
     cdf = lognorm.cdf(bins,shape,loc,scale)
     ax2.plot(bins,cdf,'r')
-    plt.show() 
+    plt.show()
+  if args.histROC8:
+    gatherer = roc8yr.ROC8YrGatherer("all", os.environ[cache_varname])
+    data = gatherer.mostrecent()
+    hist_data = []
+    for item in data.items():
+      if (float(item[1]) > 0):
+        hist_data.append(float(item[1]))
+    data = sorted(data.items(), key=lambda kv:kv[1])
+    for item in data: print(item)
+    bins = np.arange(min(hist_data), max(hist_data), 0.01)
+    ax1 = plt.subplot(211)
+    plt.title('8-year Geometric Return on Investment Capital')
+    plt.xlim([0, max(hist_data)])
+    ax1.hist(hist_data, bins=bins, normed=True, alpha=0.8)
+    shape, loc, scale = lognorm.fit(hist_data)
+    pdf = lognorm.pdf(bins,shape,loc,scale)
+    ax1.plot(bins,pdf,'r')
+    ax2 = plt.subplot(212)
+    cdf = lognorm.cdf(bins,shape,loc,scale)
+    ax2.plot(bins,cdf,'r')
+    plt.show()
   if args.plotGPA:
     gatherer = gpa.GPAGatherer(args.plotGPA, os.environ[cache_varname])
     for data in gatherer.datadict.items():
