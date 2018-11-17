@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import lognorm
 from scipy.stats import norm
+from scipy.stats import beta
 
 from hunters.symbols import snp500
 from hunters.symbols import exchanges
@@ -18,6 +19,7 @@ from gatherers import roa
 from gatherers import roc8yr
 from gatherers import roa8yr
 from gatherers import gpa
+from gatherers import grossmargin
 
 snp500_symbols_filename = "snp500_symbols.txt"
 cache_varname = "GREENLIGHT_CACHE_PATH"
@@ -59,6 +61,8 @@ if __name__ == '__main__':
   parser.add_argument("--histROA8", dest="histROA8", default=False, action="store_true")
   parser.add_argument("--plotGPA", dest="plotGPA", default=None)
   parser.add_argument("--histGPA", dest="histGPA", default=False, action="store_true")
+  parser.add_argument("--plotGM", dest="plotGM", default=None)
+  parser.add_argument("--histGM", dest="histGM", default=False, action="store_true")
   args = parser.parse_args()
   checkCachePath()
   if args.doUpdate:
@@ -237,6 +241,26 @@ if __name__ == '__main__':
     ax2 = plt.subplot(212)
     cdf = lognorm.cdf(bins,shape,loc,scale)
     ax2.plot(bins,cdf,'r')
+    plt.show() 
+  if args.plotGM:
+    gatherer = grossmargin.GrossMarginGatherer(args.plotGM, os.environ[cache_varname])
+    for data in gatherer.datadict.items():
+      plt.plot(data[1])
+    plt.ylabel("Gross Margin, %")
+    plt.show()
+  if (args.histGM==True):
+    gatherer = grossmargin.GrossMarginGatherer("all", os.environ[cache_varname])
+    data = gatherer.mostrecent()
+    hist_data = []
+    for item in data.items():
+      if (float(item[1]) > 0):
+        hist_data.append(float(item[1]))
+    data = sorted(data.items(), key=lambda kv:kv[1])
+    for item in data: print(item)
+    bins = np.arange(min(hist_data), max(hist_data), 4)
+    plt.title('Gross Margin %')
+    plt.xlim([min(hist_data), max(hist_data)])
+    plt.hist(hist_data, bins=bins, normed=True, alpha=0.8)
     plt.show() 
 
 
