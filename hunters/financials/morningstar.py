@@ -29,9 +29,17 @@ def getfile(url, filepath):
   for i in range(0,5):
     puller.retrieve(url, filepath)
     if os.stat(filepath).st_size>0:
+      with open(filepath, 'r') as thefile:
+        for line in thefile:
+          if "sorry." in line:
+            print("Warning: Invalid download. Removing file: " + str(filepath))
+            os.remove(filepath)
+            break
       return
     time.sleep(delay)
     delay = delay*2
+  if not os.path.exists(filepath): 
+    return
   if os.stat(filepath).st_size==0:
     print("Warning: Could not get financial data. Removing file: " + str(filepath))
     os.remove(filepath)
