@@ -22,6 +22,7 @@ from gatherers import gpa
 from gatherers import grossmargin
 from gatherers import margingrowth
 from gatherers import marginstability
+from gatherers import maxmargin
 
 snp500_symbols_filename = "snp500_symbols.txt"
 cache_varname = "GREENLIGHT_CACHE_PATH"
@@ -67,6 +68,7 @@ if __name__ == '__main__':
   parser.add_argument("--histGM", dest="histGM", default=False, action="store_true")
   parser.add_argument("--histMG7", dest="histMG7", default=False, action="store_true")
   parser.add_argument("--histMS8", dest="histMS8", default=False, action="store_true")
+  parser.add_argument("--histMM", dest="histMM", default=False, action="store_true")
   args = parser.parse_args()
   checkCachePath()
   if args.doUpdate:
@@ -296,6 +298,26 @@ if __name__ == '__main__':
     plt.xlim([0, max(hist_data)])
     ax1.hist(hist_data, bins=bins, normed=True, alpha=0.8)
     plt.show()
+  if args.histMM:
+    gatherer = maxmargin.MaxMarginGatherer()
+    data = gatherer.getData(os.environ[cache_varname])
+    hist_data = []
+    for item in data.items():
+      if (float(item[1]) > 0):
+        hist_data.append(float(item[1]))
+    data = sorted(data.items(), key=lambda kv:kv[1])
+    for item in data: print(item)
+    bins = np.arange(min(hist_data), max(hist_data), 0.1)
+    ax1 = plt.subplot(111)
+    plt.title('Max Margin Metric')
+    plt.xlim([0, max(hist_data)])
+    ax1.hist(hist_data, bins=bins, normed=True, alpha=0.8)
+    plt.show()
+    
+
+
+
+
 
 
 
