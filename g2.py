@@ -37,21 +37,36 @@ def checkCachePath():
     quit()
   print("Using Cache Path: \"" + os.environ[cache_varname] + "\"")
 
-def doUpdates():
+def updateSymbols():
   print("Pulling symbol data for US exchanges...")
   exchanges.getsymbols( os.environ[cache_varname] )
   print("Updating S&P500 symbols...")
   snp500.update_snp500_symbols( os.environ[cache_varname] )  
-  print("Pulling S&P500 time series data...")
+
+def updatePrices():
+  print("Pulling S&P500 price history data...")
   if not os.path.exists(os.path.join(os.environ[cache_varname], "stocks")):
     os.mkdir (os.path.join(os.environ[cache_varname], "stocks"))
   stocks.fetch_timeseries() 
-  morningstar.pull_financials( os.environ[cache_varname] )
+
+def updateFinancials(args):
   print("Pulling financial data") 
+  morningstar.pull_financials( os.environ[cache_varname], args )
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description="See numbers. Burn money.")
-  parser.add_argument("--update", "-u", dest="doUpdate", default=False, action="store_true")
+  parser.add_argument("--update-all", dest="updateAll", default=False, action="store_true")
+  parser.add_argument("--update-symbols", dest="updateSymbols", default=False, action="store_true")
+  parser.add_argument("--update-prices", dest="updatePrices", default=False, action="store_true")
+  parser.add_argument("--update-financials", dest="updateFinancials", default=False, action="store_true")
+
+  parser.add_argument("--snp", "-u", dest="snp", default=False, action="store_true")
+  parser.add_argument("--largecap", dest="largecap", default=False, action="store_true")
+  parser.add_argument("--midcap", dest="midcap", default=False, action="store_true")
+  parser.add_argument("--smallcap", dest="smallcap", default=False, action="store_true")
+  parser.add_argument("--microcap", dest="microcap", default=False, action="store_true")
+  parser.add_argument("--nanocap", dest="nanocap", default=False, action="store_true")
+
   parser.add_argument("--plotDE", dest="plotDE", default=None)
   parser.add_argument("--histDE", dest="histDE", default=False, action="store_true")
   parser.add_argument("--plotEPS", dest="plotEPS", default=None)
@@ -71,8 +86,12 @@ if __name__ == '__main__':
   parser.add_argument("--histMM", dest="histMM", default=False, action="store_true")
   args = parser.parse_args()
   checkCachePath()
-  if args.doUpdate:
-    doUpdates()
+  if args.updateAll or args.updateSymbols:
+    updateSymbols()
+  if args.updateAll or args.updatePrices:
+    updatePrices()
+  if args.updateAll or args.updateFinancials:
+    updateFinancials(args) 
   if args.plotDE is not None:
     gatherer = de.DEGatherer(args.plotDE, os.environ[cache_varname])
     for data in gatherer.datadict.items():

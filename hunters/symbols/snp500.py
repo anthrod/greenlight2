@@ -23,8 +23,8 @@ def fetch_from_wikipedia():
   soup  = BeautifulSoup(page, 'html.parser')
   table = soup.find('table', {'class': 'wikitable sortable'})
   for row in table.findAll('tr'):
-    col = row.findAll('td')
-    if len(col) > 0:
+    col = row.findAll('a')
+    if len(col) > 0 and not "Symbol" in str(col[0]):
       symbols.append(str(col[0].string.strip()))
   print('Gathered ' + str(len(symbols)) + ' symbols')
   return symbols

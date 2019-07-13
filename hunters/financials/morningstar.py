@@ -50,7 +50,7 @@ def snp_symbols(cache_path):
   with open(cached_symbols_filepath, 'r') as symbolsfile:
     for line in symbolsfile:
       symbols.append(line.strip("\n"))
-  print("Found " + len(symbols) + " to fetch")
+  print("Found " + str(len(symbols)) + " symbols to fetch")
   return symbols
 
 def fetchsymbols(cache_path, args):
