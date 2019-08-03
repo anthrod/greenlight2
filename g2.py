@@ -60,6 +60,7 @@ if __name__ == '__main__':
   parser.add_argument("--update-symbols", dest="updateSymbols", default=False, action="store_true")
   parser.add_argument("--update-prices", dest="updatePrices", default=False, action="store_true")
   parser.add_argument("--update-financials", dest="updateFinancials", default=False, action="store_true")
+  parser.add_argument("--purge", dest="purgeOldData", help="When updating data, first delete all existing old data", default=False, action="store_true")
 
   parser.add_argument("--snp", dest="snp", help="When updating financials, only update S&P500 symbols", default=False, action="store_true")
   parser.add_argument("--largecap", dest="largecap", help="When updating financials, update large caps only", default=False, action="store_true")

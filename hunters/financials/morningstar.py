@@ -1,4 +1,5 @@
 
+import shutil
 import os
 import urllib
 from urllib import urlretrieve
@@ -19,13 +20,14 @@ commonstocks_balance_cachedir_name  = os.path.join("stocks","balance")
 msKRstub  = "http://financials.morningstar.com/ajax/exportKR2CSV.html?t="
 msFinSeg1 = "http://financials.morningstar.com/ajax/ReportProcess4CSV.html?t="
 msFinSeg2 = "&reportType="
-msFinSeg3 = "&period=12&dataType=A&order=asc&columnYear=5&number=3"
+msFinSeg3 = "&period=12&dataType=A&order=asc&denominatorView=decimal&columnYear=5&number=3"
 
 def getfile(url, filepath):
   if os.path.exists(filepath):
-    return
+    return True
   puller = urllib.URLopener()
-  delay  = 2
+  delay  = 1
+  print("Pulling from: " + url)
   for i in range(0,5):
     puller.retrieve(url, filepath)
     if os.stat(filepath).st_size>0:
@@ -35,14 +37,16 @@ def getfile(url, filepath):
             print("Warning: Invalid download. Removing file: " + str(filepath))
             os.remove(filepath)
             break
-      return
+      return False
     time.sleep(delay)
     delay = delay*2
   if not os.path.exists(filepath): 
-    return
+    return False
   if os.stat(filepath).st_size==0:
     print("Warning: Could not get financial data. Removing file: " + str(filepath))
     os.remove(filepath)
+    return False
+  return True
 
 def snp_symbols(cache_path):
   cached_symbols_filepath = os.path.join(cache_path, snp500_symbols_filename)
@@ -64,6 +68,15 @@ def fetchsymbols(cache_path, args):
   fetch_nanocap = args.nanocap
   symbols = []
   for symbol_filename in market_symbols_filenames:
+    if "nasdaq" in symbol_filename:
+      prefix = "XNAS"
+    elif "nyse" in symbol_filename:
+      prefix = "XNYS"
+    elif "amex" in symbol_filename:
+      prefix = "XASE"
+    else:
+      print("Error: Unhandled exchange \"" + symbol_filename + "\"")
+      os.exit(1)
     print("Reading symbols from " + symbol_filename)
     with open( os.path.join(cache_path, symbol_filename), 'r' ) as symbolsfile:
       for line in symbolsfile:
@@ -71,28 +84,33 @@ def fetchsymbols(cache_path, args):
         entries = line.split(",")
         if "Symbol" in line or "Invesco" in line or "ProShares" in line or " Fund" in line or " ETF" in line\
           or len(entries)!=9 or entries[3]=="n/a": continue
+        symbolname = prefix + ":" + entries[0]
         if float(entries[3]) > 10000000000 and fetch_largecap:
-          symbols.append(entries[0]) 
+          symbols.append(symbolname) 
         elif float(entries[3]) > 2000000000 and fetch_midcap:
-          symbols.append(entries[0]) 
+          symbols.append(symbolname) 
         elif float(entries[3]) > 300000000 and fetch_smallcap:
-          symbols.append(entries[0]) 
+          symbols.append(symbolname) 
         elif float(entries[3]) > 50000000 and fetch_microcap:
-          symbols.append(entries[0]) 
+          symbols.append(symbolname) 
         elif float(entries[3]) > 0 and fetch_nanocap:
-          symbols.append(entries[0]) 
+          symbols.append(symbolname) 
   print("Aggregated " + str(len(symbols)) + " symbols")
   return symbols
 
 def pull_financials(cache_path, args):
   symbols = fetchsymbols(cache_path, args)
   ratios_dir   = os.path.join(cache_path, commonstocks_ratios_cachedir_name)
+  if os.path.isdir(ratios_dir) and args.purgeOldData: shutil.rmtree(ratios_dir)
   if not os.path.isdir(ratios_dir): os.mkdir(ratios_dir)
   income_dir   = os.path.join(cache_path, commonstocks_income_cachedir_name)
+  if os.path.isdir(income_dir) and args.purgeOldData: shutil.rmtree(income_dir)
   if not os.path.isdir(income_dir): os.mkdir(income_dir)
   cashflow_dir = os.path.join(cache_path, commonstocks_cashflow_cachedir_name)
+  if os.path.isdir(cashflow_dir) and args.purgeOldData: shutil.rmtree(cashflow_dir)
   if not os.path.isdir(cashflow_dir): os.mkdir(cashflow_dir)
   balance_dir  = os.path.join(cache_path, commonstocks_balance_cachedir_name)
+  if os.path.isdir(balance_dir) and args.purgeOldData: shutil.rmtree(balance_dir)
   if not os.path.isdir(balance_dir): os.mkdir(balance_dir)
   puller = urllib.URLopener()
   for symbol in symbols:
