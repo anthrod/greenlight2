@@ -144,14 +144,18 @@ def pull_financials(cache_path, args):
   if len(edgar_address_files)==0:
     handleMissingEdgarIndex(edgar_addresses_dirpath)    
   cikmap = fetch_ticker_cik_map()
+  os.chdir(data_dir)
   for symbol in symbols:
     if not symbol in cikmap:
       print("Warning: Could not find symbol \"" + symbol + "\" in the CIK->symbol map. Won't be able to fetch data")
       continue
     cik = cikmap[symbol]
     symbol_dir = os.path.join(data_dir, symbol)
-    if not os.path.isdir(symbol_dir):
+    symbol_tarball_path = symbol_dir + ".tar.gz"
+    if not os.path.exists(symbol_tarball_path):
       os.mkdir(symbol_dir)
+    else:
+      os.system("tar -xvzf " + symbol + ".tar.gz > /dev/null 2>&1")    
     print("Pulling 10-K reports for " + symbol)
     for addressfilename in edgar_address_files:
       year = addressfilename[0:4]
@@ -160,7 +164,7 @@ def pull_financials(cache_path, args):
         lines = addressfile.read().split("\n")
         for line in lines:
           if cik in line[0:7] and "|10-K|" in line:
-            url = edgar_url_stub + line.split("|")[5]
+            url = edgar_url_stub + line.split("|")[4]
             datafilename = os.path.join(os.environ[cache_varname], commonstocks_10k_cachedir_name)
             datafilename = os.path.join(datafilename, symbol)
             datafilename = os.path.join(datafilename, year + ".txt")
@@ -170,6 +174,8 @@ def pull_financials(cache_path, args):
             else:
               print("Downloading " + datafilename + " from " + url)
               download_10k(url, datafilename)
+    os.system("tar -cvzf " + symbol + ".tar.gz " + symbol + " > /dev/null 2>&1")
+    shutil.rmtree(symbol_dir)
 
 def verify_cache():
   if not cache_varname in os.environ or not os.path.isdir(os.environ[cache_varname]):
