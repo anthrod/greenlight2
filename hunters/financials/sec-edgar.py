@@ -163,7 +163,8 @@ def pull_financials(cache_path, args):
       with open(address_filepath, "r") as addressfile:
         lines = addressfile.read().split("\n")
         for line in lines:
-          if cik in line[0:7] and "|10-K|" in line:
+          entries = line.split("|")
+          if entries[0]==cik and entries[2]=="10-K":
             url = edgar_url_stub + line.split("|")[4]
             datafilename = os.path.join(os.environ[cache_varname], commonstocks_10k_cachedir_name)
             datafilename = os.path.join(datafilename, symbol)
