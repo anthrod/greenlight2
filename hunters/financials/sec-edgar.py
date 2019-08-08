@@ -108,12 +108,12 @@ def fetch_ticker_cik_map(filepath=os.path.join(os.environ[cache_varname], edgar_
       cik_map[entries[1]] = entries[0]
   return cik_map
 
-def handleMissingEdgarIndex(edgar_addresses_dirpath):
+def handleMissingEdgarIndex(edgar_addresses_dirpath, start_year=1993):
   print("Downloading EDGAR address tables to \"" + edgar_addresses_dirpath + "\"")
   if not os.path.exists(edgar_addresses_dirpath): 
     os.mkdir(edgar_addresses_dirpath)
   import edgar
-  edgar.download_index(edgar_addresses_dirpath, 1993) 
+  edgar.download_index(edgar_addresses_dirpath, start_year) 
 
 def download_10k(url, dest):
   with open(dest, "w+") as outputfile:
@@ -139,13 +139,14 @@ def pull_financials(cache_path, args):
   if os.path.isdir(edgar_addresses_dirpath) and args.purgeOldData:
     shutil.rmtree(edgar_addresses_dirpath)
   if not os.path.isdir(edgar_addresses_dirpath):
-    handleMissingEdgarIndex(edgar_addresses_dirpath)
+    handleMissingEdgarIndex(edgar_addresses_dirpath, args.startYear)
   edgar_address_files = os.listdir(edgar_addresses_dirpath)
   if len(edgar_address_files)==0:
     handleMissingEdgarIndex(edgar_addresses_dirpath)    
   cikmap = fetch_ticker_cik_map()
   os.chdir(data_dir)
   for symbol in symbols:
+    print("Pulling 10-K reports for " + symbol)
     if not symbol in cikmap:
       print("Warning: Could not find symbol \"" + symbol + "\" in the CIK->symbol map. Won't be able to fetch data")
       continue
@@ -153,12 +154,28 @@ def pull_financials(cache_path, args):
     symbol_dir = os.path.join(data_dir, symbol)
     symbol_tarball_path = symbol_dir + ".tar.gz"
     if not os.path.exists(symbol_tarball_path):
-      os.mkdir(symbol_dir)
+      if not os.path.exists(symbol_dir):
+        os.mkdir(symbol_dir)
     else:
-      os.system("tar -xvzf " + symbol + ".tar.gz > /dev/null 2>&1")    
-    print("Pulling 10-K reports for " + symbol)
+      try:
+        import tarfile
+        archive = tarfile.open(symbol_tarball_path)
+        archiveFullyUpdated = True
+        for i in range(args.startYear+1, args.endYear+1):
+          if not symbol+"/"+str(i)+".txt" in archive.getnames():
+            archiveFullyUpdated = False
+            break
+        archive.close()
+        if archiveFullyUpdated:
+          continue
+        os.system("tar -xvzf " + symbol + ".tar.gz > /dev/null 2>&1")    
+      except EOFError:
+        if not os.path.exists(symbol_dir):
+          os.mkdir(symbol_dir)
     for addressfilename in edgar_address_files:
       year = addressfilename[0:4]
+      if str(year)+".txt" in os.listdir(symbol):
+        continue
       address_filepath = os.path.join(edgar_addresses_dirpath, addressfilename)
       with open(address_filepath, "r") as addressfile:
         lines = addressfile.read().split("\n")
@@ -169,7 +186,6 @@ def pull_financials(cache_path, args):
             datafilename = os.path.join(os.environ[cache_varname], commonstocks_10k_cachedir_name)
             datafilename = os.path.join(datafilename, symbol)
             datafilename = os.path.join(datafilename, year + ".txt")
-            #print(symbol + ", " + year + ", " + url + " =-> " + datafilename ) 
             if os.path.exists(datafilename):
               print(datafilename + " exists")
             else:
@@ -195,7 +211,11 @@ if __name__ == '__main__':
   parser.add_argument("--microcap", dest="microcap", default=False, action="store_true")
   parser.add_argument("--nanocap", dest="nanocap", default=False, action="store_true")
   parser.add_argument("--purge", dest="purgeOldData", help="Purge/delete any existing data first", action="store_true")
+  parser.add_argument("--start", dest="startYear", help="Start year for data", default=int(2009))
+  parser.add_argument("--end", dest="endYear", help="End year for data", default=int(2019))
   args = parser.parse_args()
+  args.startYear = int(args.startYear)
+  args.endYear = int(args.endYear)
   verify_cache()
   cache_dir = os.environ[cache_varname] 
   pull_financials(cache_dir, args)
